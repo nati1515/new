@@ -1,0 +1,382 @@
+---
+title: "Humap pappiloma virus(HPV) Vaccine hesitancy accross 10 Human Health Services (HHS) Region in the United States"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    self_contained: true
+
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+# Install thematic and un-comment for themed static plots (i.e., ggplot2)
+# thematic::thematic_rmd()
+library (leaflet)
+library(DT)
+library(readxl)
+library(sf)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(Rnssp)
+library(ggplot2)
+library(plotly)
+library(htmltools)
+library(htmlwidgets)
+data <- read_excel("C:/Users/natit/OneDrive/Desktop/Global Health/Semester 4/capstone/GROUP PROJECT/data/merged_unvaccinated.xlsx")
+
+
+
+
+         
+data("hhs_sf")
+hhs_sf1<-hhs_sf
+hhs_sf1$region <- toupper(hhs_sf1$region)
+merged<-hhs_sf1%>%
+  left_join(data, by ="region")
+merged <- st_as_sf(merged)
+hhs_sf <- st_as_sf(hhs_sf)
+pal2 <- colorNumeric(palette = "YlOrRd", domain = merged$Proportion_Unvaccinated)
+
+
+data1 <- read_excel("C:/Users/natit/OneDrive/Desktop/Global Health/Semester 4/capstone/GROUP PROJECT/data/merged_vaccinated2.xlsx")
+
+
+
+
+         
+data("hhs_sf")
+hhs_sf2<-hhs_sf
+hhs_sf2$region <- toupper(hhs_sf2$region)
+merged1<-hhs_sf2%>%
+  left_join(data1, by ="region")
+
+merged1 <- st_as_sf(merged)
+hhs_sf <- st_as_sf(hhs_sf)
+pal <- colorNumeric(palette = "YlOrRd", domain = merged1$Proportion_Vaccinated)
+
+
+```
+
+
+# About
+
+<h2>**Major Reasons for HPV vaccine Hesitancy in Teens:**</h2>
+
+<h3>HPV Vaccine Hesitancy among teens in 10 HHS regions in the United states</h3>
+
+| Topic | Description |
+|---------------------|---------------------------------------------------|
+| **Target population** | Teens 13-17 years of age accross 10 HHS regions in the US |
+| **Research question** |what are the main reasons why teens (aged 13-17) do not receive HPV shots across the 10 HHS region-NIS teen data in 2023? | 
+| **Data source** | National immunization survey -Teen( NIS-Teen)(https://www.cdc.gov/nis/media/pdfs/2024/11/NISTEENPUF23HHQUEX.pdf)|
+| **Problem Statement ** | Despite the proven effectiveness of the HPV vaccine in explaining the prevalence of cervical cancer, its introduction cannot be targeted nationwide and is in addition to the many cancers that may be associated with HPV. There are issues that may challenge location, ethnicity/race, and economic status. Understanding the barriers to HPV vaccination and pinpointing ways to increase coverage, especially among underserved population, will help reduce the underrepresentation of HPV-related conditions.  |
+| **Impact and Importance** | Addressing persistent gaps in HPV vaccination coverage requires targeted interventions to improve provider education, increase vaccine access, and address parental concerns and misinformation. Improving immunization infrastructure, especially in low-income and rural populations, is critical to ensuring equitable coverage of HPV vaccination. Furthermore, evidence-based public health interventions are needed to increase vaccine confidence and uptake.  |
+| **Github repository** | <https://github.com/nati1515/Vaccine> |
+
+<h4>Human Healt services Regions Description</h4>
+| HHS regions | States |
+|---------------------|---------------------------------------------------|
+| **Region 1 – Boston** | Boston, Connecticut, Maine, Massachusetts, New Hampshire, Rhode Island, and Vermont |
+| **Region 2- Ner York** | New Jersey, New York, Puerto Rico, and the Virgin Islands   |
+| **Region 3 – Philadelphia** | Delaware, District of Columbia, Maryland, Pennsylvania, Virginia, and West Virginia  |
+| **Region 4- Atlanta** | Alabama, Florida, Georgia, Kentucky, Mississippi, North Carolina, South Carolina, and Tennessee    |
+| **Region 5– Chicago** | Illinois, Indiana, Michigan, Minnesota, Ohio, and Wisconsin  |
+| **Region 6- Dallas** | Arkansas, Louisiana, New Mexico, Oklahoma, and Texas  |
+| **Region 7 – Kansas City** | Iowa, Kansas, Missouri, and Nebraska  |
+| **Region 8- Denver** | Colorado, Montana, North Dakota, South Dakota, Utah, and Wyoming    |
+| **Region 9 – San Francisco** | Arizona, California, Hawaii, Nevada, American Samoa, Commonwealth of the Northern Mariana Islands, Federated States of Micronesia, Guam, Marshall Islands, and Republic of Palau  |
+| **Region 10- Seattle** | Alaska, Idaho, Oregon, and Washington   |
+
+
+Description of Data source
+===========================================
+
+
+Column {data-width=1000, .storyboard}
+-----------------------------------------------------------------------
+### National immunization survey -Teen( NIS-Teen) 
+
+***
+My capstone project is using the national immunization survey -Teen( NIS-Teen) which are a critical tool used by the Centers for Disease Control and Prevention (CDC) to monitor vaccination coverage, including the human papillomavirus (HPV) vaccine, tetanus, diphtheria, and acellular pertussis (Tdap) vaccine, and quadrivalent meningococcal conjugate vaccines, among adolescents aged 13–17 years in the United States  . 
+The NIS-Teen consists of two main components:
+
+1.	Household Interview Questionnaire: This is conducted with parents or guardians of adolescents to gather information on vaccination status, demographic characteristics, and reasons for vaccine hesitancy or refusal.
+
+2.	Provider-Immunization History Questionnaire: This is sent to healthcare providers to verify the vaccination records of the adolescents listed in the household interviews
+
+
+
+
+
+Total counts and percentage of individuals Vaccinated and Unvaccinated for HPV across the 10 HHS regions{.storyboard}
+===========================================
+
+
+
+
+### HPV Total vaccinated count and Proportion
+
+```{r}
+a <- leaflet(merged1) %>%
+  addTiles() %>%
+  addPolygons(
+    weight = 1,
+    fillColor = ~pal(Proportion_Vaccinated),
+    opacity = 1,
+    color = "white",
+    dashArray = "3",
+    fillOpacity = 0.7,
+    popup = ~paste(region,":", "<br>", "Proportion of Vaccinated:", Proportion_Vaccinated, "%","<br>", "Number of Vaccinated Teen:", TNV  )
+  ) %>%
+  addLegend(
+    "bottomright",
+    pal = pal,
+    values = ~Proportion_Vaccinated,
+    title = "Proportions of Vaccinated",
+    opacity = 1
+  ) 
+
+for (i in 1:nrow(hhs_sf)) {
+  centroid <- st_centroid(hhs_sf$geometry[i])
+  a <- a %>% addLabelOnlyMarkers(
+    lng = st_coordinates(centroid)[1],
+    lat = st_coordinates(centroid)[2],
+    label = hhs_sf$region[i],
+    labelOptions = labelOptions(
+      noHide = TRUE,
+      direction = 'center',
+      textOnly = TRUE,
+      style = list(
+        "font-weight" = "bold",
+        "font-size" = "10px",
+        "color" = "white"
+      )
+    )
+  )
+}
+
+a
+```
+> Fig: Weighted proportions of HPV vaccination (Vaccinated teen / Total population in the region) in Teens (13-17) across the 10 HHS regions of the US
+
+***
+* Key takeaways: This figure shows the proportions of teens who are vaccinated for HPV across the 10 HHS regions.Region 1, Region 3 and Region 8 have the most vaccinated groups with 67.91%, 64.32%, and 61.48% respectively
+
+
+
+
+
+### HPV Total Unvaccinated count and percentage
+
+```{r}
+a <- leaflet(merged) %>%
+  addTiles() %>%
+  addPolygons(
+    weight = 1,
+    fillColor = ~pal2(Proportion_Unvaccinated),
+    opacity = 1,
+    color = "white",
+    dashArray = "3",
+    fillOpacity = 0.7,
+    popup = ~paste(region,":", "<br>", "Proportion of Unvaccinated:", Proportion_Unvaccinated, "%","<br>", "Number of Unvaccinated Teen:", TUNV  )
+  ) %>%
+  addLegend(
+    "bottomright",
+    pal = pal2,
+    values = ~Proportion_Unvaccinated,
+    title = "Proportions of Unvaccinated",
+    opacity = 1
+  ) 
+
+for (i in 1:nrow(hhs_sf)) {
+  centroid <- st_centroid(hhs_sf$geometry[i])
+  a <- a %>% addLabelOnlyMarkers(
+    lng = st_coordinates(centroid)[1],
+    lat = st_coordinates(centroid)[2],
+    label = hhs_sf$region[i],
+    labelOptions = labelOptions(
+      noHide = TRUE,
+      direction = 'center',
+      textOnly = TRUE,
+      style = list(
+        "font-weight" = "bold",
+        "font-size" = "10px",
+        "color" = "white"
+      )
+    )
+  )
+}
+
+a
+```
+> Fig: Weighted proportions Unvaccination (Unvaccinated teen / Total population in the region) in Teens (13-17) across the 10 HHS regions of the US
+
+***
+
+* Key takeaways: This figure shows the proportions of teens who are not vaccinated for HPV and do not intend to get vaccinated across the 10 HHS regions. The three most common regions with highest vaccine hesitancy are Region 9(29.74%), Region 4 (28.39) and Region 10(26.78)
+
+```{r, echo=FALSE}
+
+
+
+df <- read_excel("C:/Users/natit/OneDrive/Desktop/Global Health/Semester 4/capstone/GROUP PROJECT/data/RegionDomain.xlsx")
+
+
+domain_columns <- colnames(df)[2:11]
+
+
+df_long <- df %>%
+  pivot_longer(cols = all_of(domain_columns), names_to = "Reason_Domain", values_to = "Percentage")
+df_long <- df_long %>%
+  mutate(HHS_REGION = ifelse(HHS_REGION== "Region 10", "Region_10", HHS_REGION))
+# Plot the percentage distribution
+
+
+
+
+
+
+```
+
+HPV Vaccine hesitancy Main reasons across regions{.storyboard}
+===========================================
+### HEATMAP
+
+```{r}
+fig <- plot_ly(df_long, x = ~HHS_REGION, y = ~Reason_Domain, z = ~Percentage,   type = 'heatmap', text = ~paste("Percentage:", Percentage, "%", "\n","Reason:", Reason_Domain), hoverinfo = 'text') %>%
+  layout(title = "Reasons for HPV vaccine hesitancy  among US teens (13-18) across 10 HHS region, US",
+         xaxis = list(title = "HHS Regions"),
+         yaxis = list(title = "Reason For HPV hesitancy"),
+         colorbar = list(title = "Percentage of reason"))
+
+#htmlwidgets::saveWidget(fig, "Heatmap.html")
+#title = "Percentage Distribution of Reason Domain Across the 10 HHS Regions",
+
+fig
+
+```
+
+***
+* Key takeaways: Percentage Distribution of HPV vaccine hesitancy reasons across the 10 HHS Regions. Vaccine misinformation and safety and effectiveness concerns are the major reasons across the regions.
+
+### Data table
+
+```{r}
+
+dt<- datatable(df,  rownames= FALSE, extensions= 'Buttons', options = list(dom='Bfrtip', buttons= list(extend= 'pdf', pageOrientation='landscape' ), list(extend ="doc")), caption= "Table: Reasons for HPV vaccine hesitancy  among US teens (13-18) across 10 HHS region, US")
+dt
+
+```
+> Table: Reasons for HPV vaccine hesitancy  among US teens (13-18) across 10 HHS region, US
+
+
+
+
+```{r, echo=FALSE}
+data <- read_excel("C:/Users/natit/OneDrive/Desktop/Global Health/Semester 4/capstone/GROUP PROJECT/data/RACEDOMAIN.xlsx")
+data$WeightedFrequency<- round(data$WeightedFrequency)
+#data$Region <-as.factor(data$Region)
+data$Domain<- as.factor(data$Domain)
+data$RACEETHK<- as.character(data$RACEETHK)
+data$RowPercent<- as.numeric((data$RowPercent))
+data$Percent<- as.numeric((data$Percent))
+data$Frequency<- as.numeric((data$Frequency))
+race_labels <- c('1' = 'Hispanic', '2' = 'Non-hispanic white', '3' = 'Nonhispanic black', '4' = 'Other/multiracial')
+data$RACEETHK <- recode(data$RACEETHK, !!!race_labels)
+reason_labeles<- c('1' = ' safety and effectiveness concerns', '2'= 'systemic barriers', '3' = 'Vaccine misinformation', '4'= 'Sociocultural barriers','5' = ' Already up-to-date', '6'= 'Personal reasons','7' = ' handicapped/special needs/ illness', '8'= 'Lack of Knowledge','9' = ' Other reasons', '10'= 'Intention to complete; not completed')
+data$Domain <- recode(data$Domain, !!!reason_labeles)
+```
+
+
+```{r, echo=FALSE}
+data1 <- read_excel("C:/Users/natit/OneDrive/Desktop/Global Health/Semester 4/capstone/GROUP PROJECT/data/DomainRacehhs.xlsx")
+data1$Weighted_frequency<- round(data1$Weighted_frequency)
+
+data1$Region <-as.factor(data1$Region)
+data1$Domain<- as.factor(data1$Domain)
+data1$RACEETHK<- as.character(data1$RACEETHK)
+data1$RowPercent<- as.numeric((data1$RowPercent))
+data1$Percent<- as.numeric((data1$Percent))
+data1$Frequency<- as.numeric((data1$Frequency))
+data1$Weighted_frequency<- as.numeric((data1$Weighted_frequency))
+race_labels <- c('1' = 'Hispanic', '2' = 'Non-hispanic white', '3' = 'Nonhispanic black', '4' = 'Other/multiracial')
+data1$RACEETHK <- recode(data1$RACEETHK, !!!race_labels)
+reason_labeles<- c('1' = ' safety and effectiveness concerns', '2'= 'systemic barriers', '3' = 'Vaccine misinformation', '4'= 'Sociocultural barriers','5' = ' Already up-to-date', '6'= 'Personal reasons','7' = ' handicapped/special needs/ illness', '8'= 'Lack of Knowledge','9' = ' Other reasons', '10'= 'Intention to complete; not completed')
+data1$Domain <- recode(data1$Domain, !!!reason_labeles)
+
+region_labeles<- c('1' = ' Region 1', '2'= 'Region 2', '3' = 'Region 3', '4'= 'Region 4','5' = ' Region 5', '6'= 'Region 6','7' = ' Region 7', '8'= 'Region 8','9' = ' Region 9', '10'= 'Region 10')
+data1$Region <- recode(data1$Region, !!!region_labeles)
+```
+
+
+HPV Vaccine hesitancy reasons startifed by Race
+===========================================
+
+
+Column {data-width=1000, .tabset}
+-----------------------------------------------------------------------
+
+
+### Over all hesitancy by Race
+
+```{r}
+a<-ggplot(data) +
+  aes(x = RACEETHK, y = WeightedFrequency, fill = Domain, text = paste("RACE:", RACEETHK, "<br>Percentage:", RowPercent, "<br>Reason Domain:", Domain, "<br>Count:", WeightedFrequency)) +
+  geom_col(position = "dodge2") +
+   scale_fill_hue(direction = 1) +
+  labs( x= "Race", y = "Population count", fill = "HPV Vaccine Hesitancy reason", caption = "This figure portrays the reasons for HPV vaccine hesitancy across the US stratified by gender.") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),  plot.title = element_text(hjust = 0.5), plot.caption = element_text(face = "italic",
+    hjust = 0)) +
+facet_wrap(vars(RACEETHK), scales = "free")
+#geom_text(aes(label = paste0(round(Percent, 1), "%")), position = position_stack(vjust = 0.5), size = 3, color = "black")+
+     
+
+c<- ggplotly(a, tooltip= "text")
+
+c
+```
+
+> Figure: Percentage of reasons for HPV vaccine hesistancy among US Teens(13-17) stratified by Race
+
+
+
+### Hestiancy Vs reasons Vs Race
+
+```{r, fig.height=15, fig.width=15}
+a<-ggplot(data1) +
+  aes(x = RACEETHK, y = Weighted_frequency, fill = Domain, text = paste("Reason:", Domain, "<br>Percentage:", Percent, "<br>Count:", Weighted_frequency, "<br>Reason Domain:", Domain)) +
+  geom_col(position = "dodge2") +
+   scale_fill_hue(direction = 1) +
+  labs( x = "Race", y = "Population count", fill = "HPV Vaccine Hesitancy reason") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 15, hjust = 0),  plot.title = element_text(hjust = 0.5), plot.caption = element_text(face = "italic",
+    hjust = 0)) +
+  facet_wrap(vars(Region), scales = "free")
+
+
+  #geom_text(aes(label = paste0(round(Percent, 1), "%")), position = position_stack(vjust = 0.5), size = 3, color = "black")+
+     
+
+c<- ggplotly(a, tooltip= "text")
+
+c
+```
+> Figure: Number of reasons for HPV vaccine hesistancy among Teens(13-17) across the 10 HHS US Regions stratified by Race
+
+
+### Table
+
+```{r}
+library(DT)
+dt<- datatable(data1,  rownames= FALSE, extensions= 'Buttons', options = list(dom='Bfrtip', buttons= list(extend= 'pdf', pageOrientation='landscape' ), list(extend ="doc")))
+
+dt
+
+```
+> Table: Reasons for HPV vaccine hesitancy  among US teens (13-18) stratifed by race and region
+
+
+
